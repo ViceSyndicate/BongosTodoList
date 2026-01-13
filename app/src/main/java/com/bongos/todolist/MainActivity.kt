@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,13 +28,19 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.flow.map
 
-import com.bongos.todolist.todoDataStore;
-import com.bongos.todolist.TodoItem;
 import com.bongos.todolist.ui.theme.BongosTodoListTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    private val dataStore by lazy {
+        applicationContext.todoDataStore
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +50,13 @@ class MainActivity : ComponentActivity() {
 
             var showDialog by remember { mutableStateOf(false) }
             var todoItems by remember { mutableStateOf<List<TodoItem>>(emptyList()) }
+            var scope = rememberCoroutineScope()
+
+            LaunchedEffect(Unit) {
+                dataStore.data.map { it.items }.collect { items ->
+                    todoItems = items
+                }
+            }
 
             BongosTodoListTheme {
 
@@ -68,12 +80,23 @@ class MainActivity : ComponentActivity() {
                             Item(
                                 item = item,
                                 onCheckedChange = { checked ->
-                                    todoItems = todoItems.map {
-                                        if (it == item) it.copy(isDone = checked) else it
+                                    scope.launch {
+                                        dataStore.updateData { current ->
+                                            current.copy(
+                                                items = current.items.map {
+                                                    if (it == item) it.copy(isDone = checked) else it
+                                                }
+                                            )
+                                        }
                                     }
                                 },
                                 onDelete = {
-                                    todoItems = todoItems - item
+                                    scope.launch {
+                                        dataStore.updateData { current ->
+                                            current.copy(items = current.items - item)
+                                        }
+                                    }
+                                    /*todoItems = todoItems - item*/
                                 },
                                 modifier = Modifier.padding(8.dp)
                             )
@@ -84,7 +107,11 @@ class MainActivity : ComponentActivity() {
                         AddItemDialog(
                             onAdd = { text ->
                                 showDialog = false
-                                todoItems = todoItems + TodoItem(text)
+                                scope.launch {
+                                    dataStore.updateData { current ->
+                                        current.copy(items = current.items + TodoItem(text))
+                                    }
+                                }
                             },
                             onDismiss = { showDialog = false }
                         )
@@ -155,7 +182,6 @@ fun Item(item: TodoItem,
                     )
                 }
 
-
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
@@ -163,7 +189,6 @@ fun Item(item: TodoItem,
                     text = item.text,
                     style = MaterialTheme.typography.bodyLarge
                 )
-
             }
             Checkbox(
                 checked = item.isDone,
