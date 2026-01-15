@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +30,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.flow.map
 
 import com.bongos.todolist.ui.theme.BongosTodoListTheme
@@ -50,7 +51,7 @@ class MainActivity : ComponentActivity() {
 
             var showDialog by remember { mutableStateOf(false) }
             var todoItems by remember { mutableStateOf<List<TodoItem>>(emptyList()) }
-            var scope = rememberCoroutineScope()
+            val scope = rememberCoroutineScope()
 
             LaunchedEffect(Unit) {
                 dataStore.data.map { it.items }.collect { items ->
@@ -159,10 +160,11 @@ fun AddItemDialog(
 }
 
 @Composable
-fun Item(item: TodoItem,
-         onCheckedChange: (Boolean) -> Unit,
-         onDelete: () -> Unit,
-         modifier: Modifier = Modifier
+fun Item(
+    item: TodoItem,
+    onCheckedChange: (Boolean) -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -172,9 +174,12 @@ fun Item(item: TodoItem,
             modifier = Modifier
                 .padding(12.dp)
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row {
+            Row (
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
@@ -185,9 +190,11 @@ fun Item(item: TodoItem,
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    textAlign = TextAlign.Center,
                     text = item.text,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = Int.MAX_VALUE,
+                    overflow = TextOverflow.Clip,
+                    textAlign = TextAlign.Center,
                 )
             }
             Checkbox(
