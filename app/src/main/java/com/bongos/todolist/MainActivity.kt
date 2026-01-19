@@ -31,11 +31,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.flow.map
 
 import com.bongos.todolist.ui.theme.BongosTodoListTheme
 import kotlinx.coroutines.launch
+
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
 
 class MainActivity : ComponentActivity() {
 
@@ -97,7 +102,6 @@ class MainActivity : ComponentActivity() {
                                             current.copy(items = current.items - item)
                                         }
                                     }
-                                    /*todoItems = todoItems - item*/
                                 },
                                 modifier = Modifier.padding(8.dp)
                             )
@@ -166,6 +170,11 @@ fun Item(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val alpha by animateFloatAsState(
+        targetValue = if (item.isDone) 0.6f else 1f,
+        animationSpec = tween(durationMillis = 300),
+        label = "alpha animation")
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         tonalElevation = 2.dp
@@ -191,10 +200,21 @@ fun Item(
 
                 Text(
                     text = item.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = Int.MAX_VALUE,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        textDecoration = if (item.isDone)
+                            TextDecoration.LineThrough
+                        else
+                            TextDecoration.None
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
                     overflow = TextOverflow.Clip,
                     textAlign = TextAlign.Center,
+                    maxLines = Int.MAX_VALUE,
+                    modifier = Modifier.graphicsLayer {
+                        // Animate scale slightly when checked
+                        scaleX = if (item.isDone) 0.98f else 1f
+                        scaleY = if (item.isDone) 0.98f else 1f
+                    }
                 )
             }
             Checkbox(
