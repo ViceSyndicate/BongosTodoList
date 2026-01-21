@@ -40,10 +40,14 @@ import kotlinx.coroutines.launch
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.ui.graphics.graphicsLayer
 
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Switch
+import androidx.compose.material.icons.filled.Brightness3
+import androidx.compose.material.icons.filled.Brightness5
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -77,8 +81,29 @@ class MainActivity : ComponentActivity() {
                         TopAppBar(
                             title = { Text("Bongos Todo List") },
                             actions = {
-                                TextButton(onClick = { isDarkMode = !isDarkMode }) {
-                                    Text(if (isDarkMode) "☀️" else "🌙")
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                ) {
+                                    if (isDarkMode)
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Filled.Brightness5,
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(end = 4.dp)
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Filled.Brightness3,
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(end = 4.dp)
+                                        )
+                                    }
+
+                                    Switch(
+                                        checked = isDarkMode,
+                                        onCheckedChange = { isDarkMode = it }
+                                    )
                                 }
                             }
                         )
