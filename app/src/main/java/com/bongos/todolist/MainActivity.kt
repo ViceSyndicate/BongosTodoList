@@ -42,6 +42,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.graphicsLayer
 
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+
+@OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
 
     private val dataStore by lazy {
@@ -56,6 +60,7 @@ class MainActivity : ComponentActivity() {
 
             var showDialog by remember { mutableStateOf(false) }
             var todoItems by remember { mutableStateOf<List<TodoItem>>(emptyList()) }
+            var isDarkMode by remember { mutableStateOf(false) }
             val scope = rememberCoroutineScope()
 
             LaunchedEffect(Unit) {
@@ -64,10 +69,20 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            BongosTodoListTheme {
+            BongosTodoListTheme(darkTheme = isDarkMode) {
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        TopAppBar(
+                            title = { Text("Bongos Todo List") },
+                            actions = {
+                                TextButton(onClick = { isDarkMode = !isDarkMode }) {
+                                    Text(if (isDarkMode) "☀️" else "🌙")
+                                }
+                            }
+                        )
+                    },
                     floatingActionButton = {
                         FloatingActionButton(
                             onClick = { showDialog = true }
