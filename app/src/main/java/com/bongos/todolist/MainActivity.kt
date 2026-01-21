@@ -123,6 +123,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                     ) {
                         items(todoItems) { item ->
+                            var showDeleteDialog by remember { mutableStateOf(false) }
                             Item(
                                 item = item,
                                 onCheckedChange = { checked ->
@@ -136,15 +137,27 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 },
-                                onDelete = {
-                                    scope.launch {
-                                        dataStore.updateData { current ->
-                                            current.copy(items = current.items - item)
-                                        }
-                                    }
+                                onDeleteRequest = {
+                                    showDeleteDialog = true
                                 },
                                 modifier = Modifier.padding(8.dp)
                             )
+                            if (showDeleteDialog) {
+                                DeleteConfirmationDialog(
+                                    itemText = item.text,
+                                    onConfirm = {
+                                        showDeleteDialog = false
+                                        scope.launch {
+                                            dataStore.updateData { current ->
+                                                current.copy(items = current.items - item)
+                                            }
+                                        }
+                                    },
+                                    onDismiss = {
+                                        showDeleteDialog = false
+                                    }
+                                )
+                            }
                         }
                     }
 
@@ -207,13 +220,14 @@ fun AddItemDialog(
 fun Item(
     item: TodoItem,
     onCheckedChange: (Boolean) -> Unit,
-    onDelete: () -> Unit,
+    onDeleteRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val alpha by animateFloatAsState(
         targetValue = if (item.isDone) 0.6f else 1f,
         animationSpec = tween(durationMillis = 300),
-        label = "alpha animation")
+        label = "alpha animation"
+    )
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -229,7 +243,7 @@ fun Item(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onDelete) {
+                IconButton(onClick = onDeleteRequest) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
                         contentDescription = "Delete"
@@ -264,4 +278,32 @@ fun Item(
         }
 
     }
+}
+
+@Composable
+fun DeleteConfirmationDialog(
+    itemText: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete Item?") },
+        text = { Text("Are you sure you want to delete \n \"$itemText\"?")},
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+               Text("Delete")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
