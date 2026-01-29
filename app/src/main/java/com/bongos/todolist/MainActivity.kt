@@ -48,6 +48,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
 import androidx.compose.material.icons.filled.Brightness3
 import androidx.compose.material.icons.filled.Brightness5
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -63,17 +64,13 @@ class MainActivity : ComponentActivity() {
         setContent {
 
             var showDialog by remember { mutableStateOf(false) }
-            var todoItems by remember { mutableStateOf<List<TodoItem>>(emptyList()) }
-            var isDarkMode by remember { mutableStateOf(false) }
+            val isDarkTheme by settingsDataStore.data.map {it.isDarkTheme }.collectAsState(initial = true)
             val scope = rememberCoroutineScope()
+            val todoItems by dataStore.data
+                .map { it.items }
+                .collectAsState(initial = emptyList())
 
-            LaunchedEffect(Unit) {
-                dataStore.data.map { it.items }.collect { items ->
-                    todoItems = items
-                }
-            }
-
-            BongosTodoListTheme(darkTheme = isDarkMode) {
+            BongosTodoListTheme(darkTheme = isDarkTheme) {
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -85,7 +82,7 @@ class MainActivity : ComponentActivity() {
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(end = 8.dp)
                                 ) {
-                                    if (isDarkMode)
+                                    if (isDarkTheme)
                                     {
                                         Icon(
                                             imageVector = Icons.Filled.Brightness5,
@@ -101,8 +98,14 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     Switch(
-                                        checked = isDarkMode,
-                                        onCheckedChange = { isDarkMode = it }
+                                        checked = isDarkTheme,
+                                        onCheckedChange = { checked ->
+                                            scope.launch {
+                                                settingsDataStore.updateData { current ->
+                                                    current.copy(isDarkTheme = checked)
+                                                }
+                                            }
+                                        }
                                     )
                                 }
                             }
